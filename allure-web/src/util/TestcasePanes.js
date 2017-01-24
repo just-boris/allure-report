@@ -1,3 +1,4 @@
+import {omit} from 'underscore';
 import TestcaseModel from '../data/testcase/TestcaseModel';
 import TestcaseView from '../components/testcase/TestcaseView';
 import AttachmentView from '../components/attachment/AttachmentView';
@@ -24,6 +25,9 @@ export default class TestcasePanes {
             state: this.state,
             model: this.testcase
         }));
+        if(['history', 'comments'].indexOf(changed.attachment) > -1) {
+            changed = omit(changed, ['attachment']);
+        }
         this.paneView.updatePane('attachment', changed, () => new AttachmentView({
             baseUrl: baseUrl + '/' + this.state.get('testcase'),
             attachment: this.testcase.getAttachment(changed.attachment),

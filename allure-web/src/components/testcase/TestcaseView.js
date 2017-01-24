@@ -1,9 +1,8 @@
 import './styles.css';
 import {View} from 'backbone.marionette';
 import {on, regions, behavior} from '../../decorators';
-import pluginsRegistry from '../../util/pluginsRegistry';
 import template from './TestcaseView.hbs';
-import ExecutionView from '../execution/ExecutionView';
+import * as tabs from './tabs';
 
 const SEVERITY_ICONS = {
     blocker: 'fa fa-exclamation-triangle',
@@ -15,44 +14,29 @@ const SEVERITY_ICONS = {
 
 @behavior('TooltipBehavior', {position: 'bottom'})
 @regions({
-    execution: '.testcase__execution'
+    content: '.testcase__content'
 })
 class TestcaseView extends View {
     template = template;
 
     initialize({state}) {
         this.state = state;
-        this.plugins = [];
         this.listenTo(this.state, 'change:attachment', this.highlightSelectedAttachment, this);
     }
 
     onRender() {
-        this.showTestcasePlugins(this.$('.testcase__content_before'), pluginsRegistry.testcaseBlocks.before);
-        this.showChildView('execution', new ExecutionView({
-            baseUrl: this.options.baseUrl + '/' + this.model.id,
-            model: this.model
+        const ChildView = tabs[this.state.get('attachment')] || tabs.execution;
+        this.showChildView('content', new ChildView({
+            model: this.model,
+            baseUrl: this.options.baseUrl
         }));
         // this.highlightSelectedAttachment();
-        this.showTestcasePlugins(this.$('.testcase__content_after'), pluginsRegistry.testcaseBlocks.after);
-    }
-
-    onDestroy() {
-        this.plugins.forEach(plugin => plugin.destroy());
     }
 
     highlightSelectedAttachment() {
         const currentAttachment = this.state.get('attachment');
         this.$('.attachment-row').removeClass('attachment-row_selected');
         this.$(`.attachment-row[data-uid="${currentAttachment}"]`).addClass('attachment-row_selected');
-    }
-
-    showTestcasePlugins(container, plugins) {
-        plugins.forEach((Plugin) => {
-            const plugin = new Plugin({model: this.model});
-            plugin.$el.appendTo(container);
-            this.plugins.push(plugin);
-            plugin.render();
-        });
     }
 
     serializeData() {
